@@ -1,9 +1,11 @@
+mod bmp;
 mod camera;
 mod framebuffer;
 mod ray;
 mod sphere;
 mod vector;
 
+use bmp::save_bmp;
 use camera::Camera;
 use framebuffer::{Framebuffer, rgb};
 use sphere::Sphere;
@@ -29,7 +31,6 @@ fn main() {
 
             let color = if sphere.intersect(&ray).is_some() {
                 hits += 1;
-
                 rgb(0, 200, 180)
             } else {
                 rgb(20, 20, 30)
@@ -39,10 +40,10 @@ fn main() {
         }
     }
 
-    let center_ray = camera.get_ray(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT);
+    save_bmp(&framebuffer, "render.bmp").expect("No se pudo guardar el render");
 
     println!("TRACE//404: The Last Debug");
     println!("Rayos generados: {}", WIDTH * HEIGHT);
     println!("Rayos que golpearon la esfera: {}", hits);
-    println!("Rayo central: {:?}", center_ray);
+    println!("Render guardado en render.bmp");
 }
