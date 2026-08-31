@@ -21,7 +21,11 @@ fn main() {
 
     let camera = Camera::new(Vec3::new(0.0, 0.0, 0.0), 60.0_f32.to_radians());
 
-    let sphere = Sphere::new(Vec3::new(0.0, 0.0, -5.0), 1.0);
+    let spheres = [
+        Sphere::new(Vec3::new(-1.3, 0.0, -5.0), 1.0),
+        Sphere::new(Vec3::new(1.0, 0.2, -4.0), 0.8),
+        Sphere::new(Vec3::new(0.0, -0.8, -6.0), 1.2),
+    ];
 
     let light = Light::new(Vec3::new(-3.0, 3.0, 0.0), 1.0);
 
@@ -33,10 +37,22 @@ fn main() {
         for x in 0..WIDTH {
             let ray = camera.get_ray(x, y, WIDTH, HEIGHT);
 
-            let color = if let Some(t) = sphere.intersect(&ray) {
+            let mut closest_t = f32::INFINITY;
+            let mut closest_sphere: Option<&Sphere> = None;
+
+            for sphere in &spheres {
+                if let Some(t) = sphere.intersect(&ray) {
+                    if t < closest_t {
+                        closest_t = t;
+                        closest_sphere = Some(sphere);
+                    }
+                }
+            }
+
+            let color = if let Some(sphere) = closest_sphere {
                 hits += 1;
 
-                let hit_point = ray.at(t);
+                let hit_point = ray.at(closest_t);
                 let normal = sphere.normal_at(hit_point);
 
                 let intensity = light.illuminate(hit_point, normal);
@@ -61,6 +77,6 @@ fn main() {
 
     println!("TRACE//404: The Last Debug");
     println!("Rayos generados: {}", WIDTH * HEIGHT);
-    println!("Rayos que golpearon la esfera: {}", hits);
+    println!("Rayos que golpearon un objeto: {}", hits);
     println!("Render guardado en render.bmp");
 }
