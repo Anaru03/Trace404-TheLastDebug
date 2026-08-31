@@ -1,6 +1,7 @@
 mod bmp;
 mod camera;
 mod framebuffer;
+mod light;
 mod ray;
 mod sphere;
 mod vector;
@@ -8,6 +9,7 @@ mod vector;
 use bmp::save_bmp;
 use camera::Camera;
 use framebuffer::{Framebuffer, rgb};
+use light::Light;
 use sphere::Sphere;
 use vector::Vec3;
 
@@ -21,7 +23,7 @@ fn main() {
 
     let sphere = Sphere::new(Vec3::new(0.0, 0.0, -5.0), 1.0);
 
-    let light_position = Vec3::new(-3.0, 3.0, 0.0);
+    let light = Light::new(Vec3::new(-3.0, 3.0, 0.0), 1.0);
 
     framebuffer.clear(rgb(20, 20, 30));
 
@@ -35,12 +37,9 @@ fn main() {
                 hits += 1;
 
                 let hit_point = ray.at(t);
-
                 let normal = sphere.normal_at(hit_point);
 
-                let light_direction = (light_position - hit_point).normalize();
-
-                let intensity = normal.dot(&light_direction).max(0.0);
+                let intensity = light.illuminate(hit_point, normal);
 
                 let ambient = 0.1;
                 let brightness = (ambient + intensity * 0.9).min(1.0);
