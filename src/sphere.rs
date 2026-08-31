@@ -38,4 +38,8 @@ impl Sphere {
             None
         }
     }
+
+    pub fn normal_at(&self, point: Vec3) -> Vec3 {
+        (point - self.center).normalize()
+    }
 }
