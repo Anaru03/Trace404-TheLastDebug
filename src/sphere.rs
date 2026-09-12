@@ -16,7 +16,7 @@ impl Sphere {
         let oc = ray.origin - self.center;
 
         let a = ray.direction.dot(&ray.direction);
-        let b = 2.0 * ray.direction.dot(&oc);
+        let b = 2.0 * oc.dot(&ray.direction);
         let c = oc.dot(&oc) - self.radius * self.radius;
 
         let discriminant = b * b - 4.0 * a * c;
@@ -25,14 +25,14 @@ impl Sphere {
             return None;
         }
 
-        let sqrt_discriminant = discriminant.sqrt();
+        let sqrt_d = discriminant.sqrt();
 
-        let t1 = (-b - sqrt_discriminant) / (2.0 * a);
-        let t2 = (-b + sqrt_discriminant) / (2.0 * a);
+        let t1 = (-b - sqrt_d) / (2.0 * a);
+        let t2 = (-b + sqrt_d) / (2.0 * a);
 
-        if t1 > 0.0 {
+        if t1 > 0.001 {
             Some(t1)
-        } else if t2 > 0.0 {
+        } else if t2 > 0.001 {
             Some(t2)
         } else {
             None
