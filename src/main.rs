@@ -4,22 +4,23 @@ mod cube;
 mod framebuffer;
 mod light;
 mod ray;
+mod scene;
 mod sphere;
 mod vector;
 
 use camera::Camera;
-use cube::Cube;
 use framebuffer::{Framebuffer, rgb};
 use light::Light;
-use minifb::{Key, Window, WindowOptions};
+use minifb::{Key, Scale, Window, WindowOptions};
+use scene::{SceneObject, build_scene};
 use vector::Vec3;
 
-const WIDTH: usize = 640;
-const HEIGHT: usize = 480;
+const WIDTH: usize = 320;
+const HEIGHT: usize = 240;
 
 const ROTATION_SPEED: f32 = 0.05;
 
-fn render(framebuffer: &mut Framebuffer, camera: &Camera, objects: &[(Cube, u32)], light: &Light) {
+fn render(framebuffer: &mut Framebuffer, camera: &Camera, objects: &[SceneObject], light: &Light) {
     let background = rgb(15, 18, 24);
 
     framebuffer.clear(background);
@@ -31,22 +32,22 @@ fn render(framebuffer: &mut Framebuffer, camera: &Camera, objects: &[(Cube, u32)
             let mut closest_t = f32::INFINITY;
             let mut pixel_color = background;
 
-            for (cube, base_color) in objects {
-                if let Some(t) = cube.intersect(&ray) {
+            for object in objects {
+                if let Some(t) = object.cube.intersect(&ray) {
                     if t < closest_t {
                         closest_t = t;
 
                         let hit_point = ray.at(t);
-                        let normal = cube.normal_at(hit_point);
+                        let normal = object.cube.normal_at(hit_point);
 
                         let diffuse = light.illuminate(hit_point, normal);
 
-                        let ambient = 0.15;
-                        let brightness = (ambient + diffuse * 0.85).min(1.0);
+                        let ambient = 0.22;
+                        let brightness = (ambient + diffuse * 0.78).min(1.0);
 
-                        let r = ((*base_color >> 16) & 255) as f32;
-                        let g = ((*base_color >> 8) & 255) as f32;
-                        let b = (*base_color & 255) as f32;
+                        let r = ((object.color >> 16) & 255) as f32;
+                        let g = ((object.color >> 8) & 255) as f32;
+                        let b = (object.color & 255) as f32;
 
                         pixel_color = rgb(
                             (r * brightness) as u32,
@@ -65,42 +66,13 @@ fn render(framebuffer: &mut Framebuffer, camera: &Camera, objects: &[(Cube, u32)
 fn main() {
     let mut framebuffer = Framebuffer::new(WIDTH, HEIGHT);
 
-    let objects = vec![
-        (
-            Cube::new(Vec3::new(-4.5, -1.2, -7.0), Vec3::new(4.5, -1.0, 1.0)),
-            rgb(55, 58, 65),
-        ),
-        (
-            Cube::new(Vec3::new(-3.2, -0.8, -4.5), Vec3::new(3.2, -0.5, -2.0)),
-            rgb(95, 65, 45),
-        ),
-        (
-            Cube::new(Vec3::new(-1.6, -0.5, -4.0), Vec3::new(1.6, 1.4, -3.7)),
-            rgb(35, 40, 45),
-        ),
-        (
-            Cube::new(Vec3::new(-1.35, -0.25, -3.65), Vec3::new(1.35, 1.15, -3.55)),
-            rgb(20, 80, 90),
-        ),
-        (
-            Cube::new(Vec3::new(2.0, -0.5, -4.2), Vec3::new(3.2, 1.6, -3.0)),
-            rgb(30, 35, 40),
-        ),
-        (
-            Cube::new(Vec3::new(-4.0, -1.0, -6.5), Vec3::new(-3.2, 2.8, -5.5)),
-            rgb(25, 30, 35),
-        ),
-        (
-            Cube::new(Vec3::new(3.2, -1.0, -6.5), Vec3::new(4.0, 2.8, -5.5)),
-            rgb(25, 30, 35),
-        ),
-    ];
+    let objects = build_scene();
 
-    let light = Light::new(Vec3::new(-4.0, 6.0, 2.0), 1.0);
+    let light = Light::new(Vec3::new(-1.95, 1.10, -2.35), 1.35);
 
     let mut camera = Camera::new(
-        Vec3::new(6.0, 4.0, 6.0),
-        Vec3::new(0.0, 0.0, -3.5),
+        Vec3::new(7.5, 4.5, 7.0),
+        Vec3::new(0.0, 0.4, -3.5),
         Vec3::new(0.0, 1.0, 0.0),
         60.0_f32.to_radians(),
     );
@@ -109,7 +81,11 @@ fn main() {
         "TRACE//404: The Last Debug | Flechas: camara orbital | ESC: salir",
         WIDTH,
         HEIGHT,
-        WindowOptions::default(),
+        WindowOptions {
+            resize: false,
+            scale: Scale::X2,
+            ..WindowOptions::default()
+        },
     )
     .expect("No se pudo crear la ventana");
 
