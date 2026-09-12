@@ -1,31 +1,28 @@
 use crate::cube::Cube;
-use crate::framebuffer::rgb;
+use crate::material::Material;
 use crate::vector::Vec3;
 
 #[derive(Clone, Copy)]
 pub struct SceneObject {
     pub cube: Cube,
-    pub color: u32,
+    pub material: Material,
 }
 
 impl SceneObject {
-    pub fn new(cube: Cube, color: u32) -> Self {
-        Self { cube, color }
+    pub fn new(cube: Cube, material: Material) -> Self {
+        Self { cube, material }
     }
 }
 
 fn add_monitor(objects: &mut Vec<SceneObject>) {
-    let dark = rgb(30, 34, 38);
-    let screen = rgb(15, 105, 115);
-
     objects.push(SceneObject::new(
         Cube::new(Vec3::new(-1.65, -0.35, -4.15), Vec3::new(1.65, 1.45, -3.75)),
-        dark,
+        Material::plastic(),
     ));
 
     objects.push(SceneObject::new(
         Cube::new(Vec3::new(-1.40, -0.10, -3.73), Vec3::new(1.40, 1.20, -3.65)),
-        screen,
+        Material::screen(),
     ));
 
     objects.push(SceneObject::new(
@@ -33,7 +30,7 @@ fn add_monitor(objects: &mut Vec<SceneObject>) {
             Vec3::new(-0.18, -0.65, -4.00),
             Vec3::new(0.18, -0.30, -3.82),
         ),
-        dark,
+        Material::plastic(),
     ));
 
     objects.push(SceneObject::new(
@@ -41,46 +38,39 @@ fn add_monitor(objects: &mut Vec<SceneObject>) {
             Vec3::new(-0.75, -0.72, -4.15),
             Vec3::new(0.75, -0.62, -3.65),
         ),
-        dark,
+        Material::plastic(),
     ));
 }
 
 fn add_pc(objects: &mut Vec<SceneObject>) {
-    let case = rgb(48, 45, 40);
-    let drive = rgb(70, 66, 58);
-    let green = rgb(30, 150, 90);
-
     objects.push(SceneObject::new(
         Cube::new(Vec3::new(2.05, -0.65, -4.35), Vec3::new(3.30, 1.55, -3.05)),
-        case,
+        Material::plastic(),
     ));
 
     objects.push(SceneObject::new(
         Cube::new(Vec3::new(2.25, 0.85, -3.03), Vec3::new(3.10, 1.15, -2.98)),
-        drive,
+        Material::server(),
     ));
 
     objects.push(SceneObject::new(
         Cube::new(Vec3::new(2.25, 0.35, -3.03), Vec3::new(3.10, 0.60, -2.98)),
-        drive,
+        Material::server(),
     ));
 
     objects.push(SceneObject::new(
         Cube::new(Vec3::new(2.65, -0.25, -3.02), Vec3::new(2.82, -0.08, -2.96)),
-        green,
+        Material::green_led(),
     ));
 }
 
 fn add_keyboard(objects: &mut Vec<SceneObject>) {
-    let body = rgb(65, 62, 55);
-    let keys = rgb(35, 35, 32);
-
     objects.push(SceneObject::new(
         Cube::new(
             Vec3::new(-1.70, -0.48, -2.65),
             Vec3::new(1.45, -0.32, -1.75),
         ),
-        body,
+        Material::plastic(),
     ));
 
     let start_x = -1.48;
@@ -93,20 +83,16 @@ fn add_keyboard(objects: &mut Vec<SceneObject>) {
 
             objects.push(SceneObject::new(
                 Cube::new(Vec3::new(x, -0.30, z), Vec3::new(x + 0.22, -0.23, z + 0.16)),
-                keys,
+                Material::plastic(),
             ));
         }
     }
 }
 
 fn add_rack(objects: &mut Vec<SceneObject>, min_x: f32, max_x: f32) {
-    let frame = rgb(24, 28, 32);
-    let server = rgb(38, 44, 48);
-    let led = rgb(20, 100, 145);
-
     objects.push(SceneObject::new(
         Cube::new(Vec3::new(min_x, -1.0, -7.0), Vec3::new(max_x, 3.3, -5.7)),
-        frame,
+        Material::dark_metal(),
     ));
 
     for row in 0..6 {
@@ -117,7 +103,7 @@ fn add_rack(objects: &mut Vec<SceneObject>, min_x: f32, max_x: f32) {
                 Vec3::new(min_x + 0.10, y, -5.68),
                 Vec3::new(max_x - 0.10, y + 0.38, -5.60),
             ),
-            server,
+            Material::server(),
         ));
 
         objects.push(SceneObject::new(
@@ -125,21 +111,18 @@ fn add_rack(objects: &mut Vec<SceneObject>, min_x: f32, max_x: f32) {
                 Vec3::new(max_x - 0.28, y + 0.12, -5.58),
                 Vec3::new(max_x - 0.18, y + 0.22, -5.54),
             ),
-            led,
+            Material::blue_led(),
         ));
     }
 }
 
 fn add_lamp(objects: &mut Vec<SceneObject>) {
-    let metal = rgb(32, 34, 35);
-    let light = rgb(235, 205, 145);
-
     objects.push(SceneObject::new(
         Cube::new(
             Vec3::new(-3.05, -0.58, -2.80),
             Vec3::new(-2.25, -0.48, -2.05),
         ),
-        metal,
+        Material::dark_metal(),
     ));
 
     objects.push(SceneObject::new(
@@ -147,22 +130,22 @@ fn add_lamp(objects: &mut Vec<SceneObject>) {
             Vec3::new(-2.72, -0.48, -2.48),
             Vec3::new(-2.58, 0.70, -2.34),
         ),
-        metal,
+        Material::dark_metal(),
     ));
 
     objects.push(SceneObject::new(
         Cube::new(Vec3::new(-2.68, 0.55, -2.42), Vec3::new(-2.05, 0.70, -2.28)),
-        metal,
+        Material::dark_metal(),
     ));
 
     objects.push(SceneObject::new(
         Cube::new(Vec3::new(-2.15, 0.35, -2.55), Vec3::new(-1.75, 0.72, -2.15)),
-        metal,
+        Material::dark_metal(),
     ));
 
     objects.push(SceneObject::new(
         Cube::new(Vec3::new(-2.08, 0.30, -2.48), Vec3::new(-1.82, 0.36, -2.22)),
-        light,
+        Material::screen(),
     ));
 }
 
@@ -171,22 +154,21 @@ pub fn build_scene() -> Vec<SceneObject> {
 
     objects.push(SceneObject::new(
         Cube::new(Vec3::new(-6.5, -1.25, -8.0), Vec3::new(6.5, -1.05, 2.0)),
-        rgb(55, 58, 63),
+        Material::floor(),
     ));
 
     objects.push(SceneObject::new(
         Cube::new(Vec3::new(-3.6, -0.90, -4.8), Vec3::new(3.6, -0.60, -1.35)),
-        rgb(100, 65, 42),
+        Material::wood(),
     ));
 
     add_monitor(&mut objects);
     add_pc(&mut objects);
     add_keyboard(&mut objects);
+    add_lamp(&mut objects);
 
     add_rack(&mut objects, -5.0, -3.7);
     add_rack(&mut objects, 3.8, 5.1);
-    add_keyboard(&mut objects);
-    add_lamp(&mut objects);
 
     objects
 }
