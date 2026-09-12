@@ -31,13 +31,8 @@ impl Cube {
             return None;
         }
 
-        if ty_min > t_min {
-            t_min = ty_min;
-        }
-
-        if ty_max < t_max {
-            t_max = ty_max;
-        }
+        t_min = t_min.max(ty_min);
+        t_max = t_max.min(ty_max);
 
         let mut tz_min = (self.min.z - ray.origin.z) / ray.direction.z;
         let mut tz_max = (self.max.z - ray.origin.z) / ray.direction.z;
@@ -50,13 +45,8 @@ impl Cube {
             return None;
         }
 
-        if tz_min > t_min {
-            t_min = tz_min;
-        }
-
-        if tz_max < t_max {
-            t_max = tz_max;
-        }
+        t_min = t_min.max(tz_min);
+        t_max = t_max.min(tz_max);
 
         if t_min > 0.0 {
             Some(t_min)

@@ -7,106 +7,130 @@ mod ray;
 mod sphere;
 mod vector;
 
-use bmp::save_bmp;
 use camera::Camera;
 use cube::Cube;
 use framebuffer::{Framebuffer, rgb};
 use light::Light;
-use sphere::Sphere;
+use minifb::{Key, Window, WindowOptions};
 use vector::Vec3;
 
-const WIDTH: usize = 400;
-const HEIGHT: usize = 300;
+const WIDTH: usize = 640;
+const HEIGHT: usize = 480;
 
-fn main() {
-    let mut framebuffer = Framebuffer::new(WIDTH, HEIGHT);
+const ROTATION_SPEED: f32 = 0.05;
 
-    let camera = Camera::new(Vec3::new(0.0, 0.0, 0.0), 60.0_f32.to_radians());
+fn render(framebuffer: &mut Framebuffer, camera: &Camera, objects: &[(Cube, u32)], light: &Light) {
+    let background = rgb(15, 18, 24);
 
-    let spheres = [
-        Sphere::new(Vec3::new(-1.3, 0.0, -5.0), 1.0),
-        Sphere::new(Vec3::new(1.0, 0.2, -4.0), 0.8),
-        Sphere::new(Vec3::new(0.0, -0.8, -6.0), 1.2),
-    ];
-
-    let cube = Cube::new(Vec3::new(-0.8, -0.8, -3.5), Vec3::new(0.8, 0.8, -2.5));
-
-    let light = Light::new(Vec3::new(-3.0, 3.0, 0.0), 1.0);
-
-    framebuffer.clear(rgb(20, 20, 30));
-
-    let mut hits = 0;
+    framebuffer.clear(background);
 
     for y in 0..HEIGHT {
         for x in 0..WIDTH {
             let ray = camera.get_ray(x, y, WIDTH, HEIGHT);
 
             let mut closest_t = f32::INFINITY;
-            let mut closest_sphere: Option<&Sphere> = None;
-            let mut hit_cube = false;
+            let mut pixel_color = background;
 
-            for sphere in &spheres {
-                if let Some(t) = sphere.intersect(&ray) {
+            for (cube, base_color) in objects {
+                if let Some(t) = cube.intersect(&ray) {
                     if t < closest_t {
                         closest_t = t;
-                        closest_sphere = Some(sphere);
-                        hit_cube = false;
+
+                        let hit_point = ray.at(t);
+                        let normal = cube.normal_at(hit_point);
+
+                        let diffuse = light.illuminate(hit_point, normal);
+
+                        let ambient = 0.15;
+                        let brightness = (ambient + diffuse * 0.85).min(1.0);
+
+                        let r = ((*base_color >> 16) & 255) as f32;
+                        let g = ((*base_color >> 8) & 255) as f32;
+                        let b = (*base_color & 255) as f32;
+
+                        pixel_color = rgb(
+                            (r * brightness) as u32,
+                            (g * brightness) as u32,
+                            (b * brightness) as u32,
+                        );
                     }
                 }
             }
 
-            if let Some(t) = cube.intersect(&ray) {
-                if t < closest_t {
-                    closest_t = t;
-                    closest_sphere = None;
-                    hit_cube = true;
-                }
-            }
-
-            let color = if hit_cube {
-                hits += 1;
-
-                let hit_point = ray.at(closest_t);
-                let normal = cube.normal_at(hit_point);
-
-                let intensity = light.illuminate(hit_point, normal);
-
-                let ambient = 0.1;
-                let brightness = (ambient + intensity * 0.9).min(1.0);
-
-                let r = (180.0 * brightness) as u32;
-                let g = (80.0 * brightness) as u32;
-                let b = (50.0 * brightness) as u32;
-
-                rgb(r, g, b)
-            } else if let Some(sphere) = closest_sphere {
-                hits += 1;
-
-                let hit_point = ray.at(closest_t);
-                let normal = sphere.normal_at(hit_point);
-
-                let intensity = light.illuminate(hit_point, normal);
-
-                let ambient = 0.1;
-                let brightness = (ambient + intensity * 0.9).min(1.0);
-
-                let r = (0.0 * brightness) as u32;
-                let g = (200.0 * brightness) as u32;
-                let b = (180.0 * brightness) as u32;
-
-                rgb(r, g, b)
-            } else {
-                rgb(20, 20, 30)
-            };
-
-            framebuffer.set_pixel(x, y, color);
+            framebuffer.set_pixel(x, y, pixel_color);
         }
     }
+}
 
-    save_bmp(&framebuffer, "render.bmp").expect("No se pudo guardar el render");
+fn main() {
+    let mut framebuffer = Framebuffer::new(WIDTH, HEIGHT);
 
-    println!("TRACE//404: The Last Debug");
-    println!("Rayos generados: {}", WIDTH * HEIGHT);
-    println!("Rayos que golpearon un objeto: {}", hits);
-    println!("Render guardado en render.bmp");
+    let objects = vec![
+        (
+            Cube::new(Vec3::new(-4.5, -1.2, -7.0), Vec3::new(4.5, -1.0, 1.0)),
+            rgb(55, 58, 65),
+        ),
+        (
+            Cube::new(Vec3::new(-3.2, -0.8, -4.5), Vec3::new(3.2, -0.5, -2.0)),
+            rgb(95, 65, 45),
+        ),
+        (
+            Cube::new(Vec3::new(-1.6, -0.5, -4.0), Vec3::new(1.6, 1.4, -3.7)),
+            rgb(35, 40, 45),
+        ),
+        (
+            Cube::new(Vec3::new(-1.35, -0.25, -3.65), Vec3::new(1.35, 1.15, -3.55)),
+            rgb(20, 80, 90),
+        ),
+        (
+            Cube::new(Vec3::new(2.0, -0.5, -4.2), Vec3::new(3.2, 1.6, -3.0)),
+            rgb(30, 35, 40),
+        ),
+        (
+            Cube::new(Vec3::new(-4.0, -1.0, -6.5), Vec3::new(-3.2, 2.8, -5.5)),
+            rgb(25, 30, 35),
+        ),
+        (
+            Cube::new(Vec3::new(3.2, -1.0, -6.5), Vec3::new(4.0, 2.8, -5.5)),
+            rgb(25, 30, 35),
+        ),
+    ];
+
+    let light = Light::new(Vec3::new(-4.0, 6.0, 2.0), 1.0);
+
+    let mut camera = Camera::new(
+        Vec3::new(6.0, 4.0, 6.0),
+        Vec3::new(0.0, 0.0, -3.5),
+        Vec3::new(0.0, 1.0, 0.0),
+        60.0_f32.to_radians(),
+    );
+
+    let mut window = Window::new(
+        "TRACE//404: The Last Debug | Flechas: camara orbital | ESC: salir",
+        WIDTH,
+        HEIGHT,
+        WindowOptions::default(),
+    )
+    .expect("No se pudo crear la ventana");
+
+    while window.is_open() && !window.is_key_down(Key::Escape) {
+        let orbit_controls = [
+            (Key::Left, ROTATION_SPEED, 0.0),
+            (Key::Right, -ROTATION_SPEED, 0.0),
+            (Key::Up, 0.0, -ROTATION_SPEED),
+            (Key::Down, 0.0, ROTATION_SPEED),
+        ];
+
+        for (key, delta_yaw, delta_pitch) in orbit_controls {
+            if window.is_key_down(key) {
+                camera.orbit(delta_yaw, delta_pitch);
+            }
+        }
+
+        render(&mut framebuffer, &camera, &objects, &light);
+
+        window
+            .update_with_buffer(&framebuffer.buffer, WIDTH, HEIGHT)
+            .expect("No se pudo actualizar la ventana");
+    }
 }
